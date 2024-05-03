@@ -79,7 +79,7 @@ const deleteUser = asyncWrapper(async (req, res) => {
 
 const register = asyncWrapper(async (req, res, next) => {
   const { firstName, lastName, email, password, role } = req.body;
-  const avatar = req.file.filename;
+  const avatar = req.file && req.file.filename ? req.file.filename : "profile.jpg";
 
   const oldUser = await User.findOne({ email: email });
 
