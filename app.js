@@ -5,6 +5,7 @@ const httpStatusText = require("./utils/httpStatusText");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const morgan = require("morgan");
 
 
 const app = express();
@@ -22,6 +23,7 @@ mongoose.connect(url).then(() => {
 
 app.use(express.json());
 app.use(cors());
+app.use(morgan("dev"))
 
 
 const usersRouter = require("./routes/user.route.js");
