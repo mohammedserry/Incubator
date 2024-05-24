@@ -23,7 +23,10 @@ mongoose.connect(url).then(() => {
 
 app.use(express.json());
 app.use(cors());
-app.use(morgan("dev"))
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+  console.log(`mode : ${process.env.NODE_ENV}`);
+}
 
 
 const usersRouter = require("./routes/user.route.js");
