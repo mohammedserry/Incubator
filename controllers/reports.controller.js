@@ -52,7 +52,7 @@ const addReport = asyncWrapper(async (req, res, next) => {
 
   const newReport = await Report.create({
     userId,
-    caseId,
+    caseId : req.body.caseId,
     report,
     createdAt
   });
