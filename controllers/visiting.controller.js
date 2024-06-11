@@ -37,19 +37,16 @@ const getVisiting = asyncWrapper(async (req, res, next) => {
 
 const addVisiting = asyncWrapper(async (req, res, next) => {
   const userId = req.userId; 
-  const {visiting, comments} = req.body;
-
-  // Fetch the most recent case from the database
-  const latestCase = await Case.findOne().sort({ _id: -1 });
+  const {visiting, comments, caseId} = req.body;
 
   // Check if a case exists
-  if (!latestCase) {
+  if (!caseId) {
     return res.status(400).json({ message: 'No case found' });
   }
 
   const newVisiting = await Visiting.create({
     userId,
-    caseId : latestCase._id,
+    caseId,
     visiting,
     comments
   });

@@ -39,20 +39,18 @@ const getReport = asyncWrapper(async (req, res, next) => {
 
 const addReport = asyncWrapper(async (req, res, next) => {
   const userId = req.userId; 
+  const caseId = req.body.caseId;
   const report = req.file.filename;
   const createdAt = new Date();
 
-  // Fetch the most recent case from the database
-  // const latestCase = await Case.findOne().sort({ _id: -1 });
-
   // Check if a case exists
-  // if (!latestCase) {
-  //   return res.status(400).json({ message: 'No case found' });
-  // }
+  if (!caseId) {
+    return res.status(400).json({ message: 'No case found' });
+  }
 
   const newReport = await Report.create({
     userId,
-    caseId : req.body.caseId,
+    caseId,
     report,
     createdAt
   });

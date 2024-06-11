@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams : true });
 const reportController = require("../controllers/reports.controller.js");
 const verifyToken = require("../middlewares/verifyToken");
 const multer = require("multer");
