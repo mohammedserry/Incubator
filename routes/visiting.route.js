@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams : true });
 const visitingController = require("../controllers/visiting.controller.js");
 const verifyToken = require("../middlewares/verifyToken.js");
 const allowedTo = require("../middlewares/allowedTo.js");
@@ -11,7 +11,7 @@ router.use(requireAuth);
 router
   .route("/")
   .get(verifyToken, allowedTo(userRoles.ADMIN), visitingController.getAllVisiting)
-  .post(verifyToken, allowedTo(userRoles.ADMIN), visitingController.addVisiting);
+  .post(visitingController.setCaseIdToBody, verifyToken, allowedTo(userRoles.ADMIN), visitingController.addVisiting);
 
 
 router

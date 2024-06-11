@@ -8,6 +8,7 @@ const allowedTo = require("../middlewares/allowedTo");
 const userRoles = require("../utils/userRoles.js");
 const requireAuth = require("../middlewares/requireAuth");
 const reportsRoute = require("./reports.route.js");
+const visitingRoute = require("./visiting.route.js")
 
 router.use(requireAuth);
 
@@ -37,12 +38,13 @@ router.use(requireAuth);
 //   fileFilter: fileFilter 
 // });
 
-router.use("/:caseId/reports", reportsRoute)
+router.use("/:caseId/reports", reportsRoute);
+router.use("/:caseId/visiting", visitingRoute);
 
 router
   .route("/")
   .get(verifyToken, allowedTo(userRoles.ADMIN), caseController.getAllCases)
-  .post(uploads.single("reports"), verifyToken, allowedTo(userRoles.ADMIN), caseController.addCase);
+  .post(verifyToken, allowedTo(userRoles.ADMIN), caseController.addCase);
 
 router
   .route("/:caseId")

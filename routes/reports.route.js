@@ -40,7 +40,7 @@ const uploads = multer({
 router
   .route("/")
   .get(verifyToken, allowedTo(userRoles.ADMIN), reportController.getAllReports)
-  .post(uploads.single("report"), verifyToken, allowedTo(userRoles.ADMIN), reportController.addReport)
+  .post(reportController.setCaseIdToBody, uploads.single("report"), verifyToken, allowedTo(userRoles.ADMIN), reportController.addReport)
 
 
 router

@@ -8,15 +8,19 @@ const asyncWrapper = require("../middlewares/asyncWrapper.js");
 
 
 const getAllReports = asyncWrapper(async (req, res) => {
-  const userId = req.userId;
-  const latestCase = await Case.findOne().sort({ _id: -1 });
   const query = req.query;
 
   const limit = query.limit || 10;
   const page = query.page || 1;
   const skip = (page - 1) * limit;
 
-  const reports = await Report.find({ userId, caseId: latestCase._id}, { __v: false, password: false })
+  let filterObject = {};
+  if(req.params.caseId){
+    filterObject = { caseId : req.params.caseId}
+  }
+
+
+  const reports = await Report.find(filterObject, { __v: false, password: false })
     .limit(limit)
     .skip(skip);
 
@@ -37,9 +41,16 @@ const getReport = asyncWrapper(async (req, res, next) => {
   return res.json({ status: httpStatusText.SUCCESS, data: { foundReport } });
 });
 
+const setCaseIdToBody = (req,res,next) => {
+  if(!req.body.caseId){
+    req.body.caseId = req.params.caseId;
+  }
+  next();
+}
+
 const addReport = asyncWrapper(async (req, res, next) => {
   const userId = req.userId; 
-  const caseId = req.body.caseId;
+  const caseId = req.body.caseId || req.params.caseId;
   const report = req.file.filename;
   const createdAt = new Date();
 
@@ -100,4 +111,5 @@ module.exports = {
   addReport,
   updateReport,
   deleteReport,
+  setCaseIdToBody,
 };

@@ -6,15 +6,18 @@ const asyncWrapper = require("../middlewares/asyncWrapper.js");
 
 
 const getAllVisiting = asyncWrapper(async (req, res) => {
-  const userId = req.userId;
-  const latestCase = await Case.findOne().sort({ _id: -1 });
   const query = req.query;
 
   const limit = query.limit || 10;
   const page = query.page || 1;
   const skip = (page - 1) * limit;
 
-  const visiting = await Visiting.find({ userId, caseId: latestCase._id}, { __v: false, password: false })
+  let filterObject = {};
+  if(req.params.caseId){
+    filterObject = { caseId : req.params.caseId}
+  }
+
+  const visiting = await Visiting.find(filterObject, { __v: false, password: false })
     .limit(limit)
     .skip(skip);
 
@@ -35,9 +38,17 @@ const getVisiting = asyncWrapper(async (req, res, next) => {
   return res.json({ status: httpStatusText.SUCCESS, data: { foundVisiting } });
 });
 
+const setCaseIdToBody = (req,res,next) => {
+  if(!req.body.caseId){
+    req.body.caseId = req.params.caseId;
+  }
+  next();
+}
+
 const addVisiting = asyncWrapper(async (req, res, next) => {
   const userId = req.userId; 
-  const {visiting, comments, caseId} = req.body;
+  const {visiting, comments} = req.body;
+  const caseId = req.body.caseId || req.params.caseId;
 
   // Check if a case exists
   if (!caseId) {
@@ -84,4 +95,5 @@ module.exports = {
   addVisiting,
   updateVisiting,
   deleteVisiting,
+  setCaseIdToBody,
 };
