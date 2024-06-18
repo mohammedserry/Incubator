@@ -35,6 +35,7 @@ const reportsRouter = require("./routes/reports.route.js");
 const visitingRouter = require("./routes/visiting.route.js");
 
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/auth", usersRouter);
 app.use("/api/v1/cases", casesRouter);
 app.use("/api/v1/reports", reportsRouter);
 app.use("/api/v1/visiting", visitingRouter);

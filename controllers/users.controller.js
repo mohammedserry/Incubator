@@ -2,7 +2,9 @@ const asyncWrapper = require("../middlewares/asyncWrapper");
 const User = require("../models/user.model");
 const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
+const sendEmail = require("../utils/sendEmail");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 // const jwt = require("jsonwebtoken");
 const generateJWT = require("../utils/generateJWT");
 const { validationResult } = require("express-validator");
@@ -48,7 +50,7 @@ const addUser = asyncWrapper(async (req, res, next) => {
 
 const updateUser = asyncWrapper(async (req, res, next) => {
   const userId = req.params.userId;
-  
+
   // Use findOneAndUpdate to update and return the updated document
   const updatedUser = await User.findOneAndUpdate(
     { _id: userId },
@@ -59,7 +61,7 @@ const updateUser = asyncWrapper(async (req, res, next) => {
   if (!updatedUser) {
     // If user is not found, create an error
     const error = appError.create(
-      'User not found',
+      "User not found",
       404,
       httpStatusText.NOT_FOUND
     );
@@ -70,7 +72,6 @@ const updateUser = asyncWrapper(async (req, res, next) => {
   res.json({ status: httpStatusText.SUCCESS, data: { user: updatedUser } });
 });
 
-
 const deleteUser = asyncWrapper(async (req, res) => {
   const data = await User.deleteOne({ _id: req.params.userId });
 
@@ -79,7 +80,8 @@ const deleteUser = asyncWrapper(async (req, res) => {
 
 const register = asyncWrapper(async (req, res, next) => {
   const { firstName, lastName, email, password, role } = req.body;
-  const avatar = req.file && req.file.filename ? req.file.filename : "profile.jpg";
+  const avatar =
+    req.file && req.file.filename ? req.file.filename : "profile.jpg";
 
   const oldUser = await User.findOne({ email: email });
 
@@ -101,7 +103,6 @@ const register = asyncWrapper(async (req, res, next) => {
     password: hashedPassword,
     role,
     avatar,
-    
   });
 
   // generate JWT token
@@ -156,6 +157,74 @@ const login = asyncWrapper(async (req, res, next) => {
   }
 });
 
+const forgotPassword = asyncWrapper(async (req, res, next) => {
+  // 1) Get user by email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(
+      new appError(`There is no user with this email ${req.body.email}`)
+    );
+  }
+  // 2) if user exist, Generate hash reset random 6 digits
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedResetCode = crypto
+    .createHash("sha256")
+    .update(resetCode)
+    .digest("hex");
+
+  // Save hashed password reset code in the db
+  user.passwordResetCode = hashedResetCode;
+  // Add expiration time for password reset code (10 min)
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  user.passwordResetVerified = false;
+
+  await user.save();
+
+  // 3) Send the reset code via email
+  const message = `Hi ${user.name}, \n We received a request to reset the password on your Incubator Account. \n  ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure. \n The Incubator Team`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset code (valid for 10 min)",
+      message,
+    });
+  } catch (error) {
+    user.passwordResetCode = undefined;
+    user.passwordResetExpires = undefined;
+    user.passwordResetVerified = undefined;
+
+    await user.save();
+    return next(new appError("There is an error in sending email", 500));
+  }
+
+  res
+    .status(200)
+    .json({ status: "Success", message: "Reset code sent to email" });
+});
+
+const verifyPassResetCode = asyncWrapper(async (req, res, next) => {
+  // 1) Get user based on reset code
+  const hashedResetCode = crypto
+    .createHash("sha256")
+    .update(req.body.resetCode)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetCode: hashedResetCode,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+  if (!user) {
+    return next(new appError("Reset Code Invalid or Expired"));
+  }
+  user.passwordResetVerified = true;
+  await user.save();
+
+  res.status(200).json({
+    status: "Success",
+  });
+});
+
 module.exports = {
   getAllUsers,
   getUser,
@@ -164,4 +233,6 @@ module.exports = {
   deleteUser,
   register,
   login,
+  forgotPassword,
+  verifyPassResetCode
 };

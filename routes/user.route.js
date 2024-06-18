@@ -37,19 +37,32 @@ const upload = multer({ storage: diskStorage, fileFilter });
 
 router
   .route("/")
-  .get(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.getAllUsers)
+  .get(
+    verifyToken,
+    allowedTo(userRoles.SUPER_ADMIN),
+    userController.getAllUsers
+  )
   .post(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.addUser);
 
 router
   .route("/:userId")
   .get(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.getUser)
   .patch(userController.updateUser)
-  .delete(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.deleteUser);
+  .delete(
+    verifyToken,
+    allowedTo(userRoles.SUPER_ADMIN),
+    userController.deleteUser
+  );
 
 router
   .route("/register")
   .post(upload.single("avatar"), userController.register);
 
 router.route("/login").post(userController.login);
+
+router.route("/forgotPassword").post(userController.forgotPassword);
+
+router.route("/verifyResetCode").post(userController.verifyPassResetCode);
+
 
 module.exports = router;

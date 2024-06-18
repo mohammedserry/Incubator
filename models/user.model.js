@@ -21,9 +21,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  token: {
-    type: String,
-  },
+  passwordChangedAt: Date,
+  passwordResetCode : String,
+  passwordResetExpires : Date,
+  passwordResetVerified : Boolean,
+  // token: {
+  //   type: String,
+  // },
   role: {
     type: String,
     enum: [userRoles.ADMIN, userRoles.USER],
