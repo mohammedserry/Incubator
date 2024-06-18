@@ -247,7 +247,11 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   user.save();
 
   // 3) If everything is ok, generate token
-  const token = await generateJWT({ id: user.id });
+  const token = await generateJWT({
+    email: user.email,
+    id: user._id,
+    role: user.role,
+  });
   res.status(200).json({ token });
 });
 
@@ -261,5 +265,5 @@ module.exports = {
   login,
   forgotPassword,
   verifyPassResetCode,
-  resetPassword
+  resetPassword,
 };
