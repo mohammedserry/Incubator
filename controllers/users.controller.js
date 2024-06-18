@@ -225,6 +225,32 @@ const verifyPassResetCode = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const resetPassword = asyncWrapper(async (req, res, next) => {
+  // 1) Get user based on email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(
+      new appError(`There is no user with this email ${req.body.email}`, 404)
+    );
+  }
+
+  // 2) Check if reset code verified
+  if (!user.passwordResetVerified) {
+    return next(new appError("Reset code not verified", 400));
+  }
+
+  user.password = req.body.newPassword;
+  user.passwordResetCode = undefined;
+  user.passwordResetExpires = undefined;
+  user.passwordResetVerified = undefined;
+
+  user.save();
+
+  // 3) If everything is ok, generate token
+  const token = await generateJWT({ id: user._id });
+  res.status(200).json({ token });
+});
+
 module.exports = {
   getAllUsers,
   getUser,
@@ -234,5 +260,6 @@ module.exports = {
   register,
   login,
   forgotPassword,
-  verifyPassResetCode
+  verifyPassResetCode,
+  resetPassword
 };

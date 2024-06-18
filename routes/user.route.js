@@ -64,5 +64,8 @@ router.route("/forgotPassword").post(userController.forgotPassword);
 
 router.route("/verifyResetCode").post(userController.verifyPassResetCode);
 
+router.route("/resetPassword").patch(userController.resetPassword);
+
+
 
 module.exports = router;
