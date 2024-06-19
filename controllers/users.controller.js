@@ -231,28 +231,29 @@ const verifyPassResetCode = asyncWrapper(async (req, res, next) => {
 });
 
 const resetPassword = asyncWrapper(async (req, res, next) => {
-// 1) Get user based on email
+  // 1) Get user based on email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(new AppError(`There is no user with this email ${req.body.email}`, 404));
+    return next(
+      new appError.create(`There is no user with this email ${req.body.email}`, 404)
+    );
   }
 
   // 2) Check if reset code verified
   if (!user.passwordResetVerified) {
-    return next(new AppError("Reset code not verified", 400));
+    return next(new appError.create("Reset code not verified", 400));
   }
 
-  // 3) Update password and reset fields
   user.password = req.body.newPassword;
   user.passwordResetCode = undefined;
   user.passwordResetExpires = undefined;
   user.passwordResetVerified = undefined;
 
-  await user.save();
+  user.save();
 
-  // 4) Generate token
+  // 3) If everything is ok, generate token
   const token = generateJWT(user._id);
-  res.status(200).json({ data: token });
+  res.status(200).json({ token });
 });
 
 module.exports = {
