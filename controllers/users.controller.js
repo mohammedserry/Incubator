@@ -185,7 +185,9 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
   await user.save();
 
   // 3) Send the reset code via email
-  const message = `Hi ${user.name}, \n We received a request to reset the password on your Incubator Account. \n  ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure. \n The Incubator Team`;
+  const message = `Hi ${user.name}, \n We received a request to reset the password on your Incubator Account. 
+  \n  ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure. 
+  \n The Incubator Team`;
 
   try {
     await sendEmail({
@@ -199,8 +201,8 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
     user.passwordResetVerified = undefined;
 
     await user.save();
-    const err = appError.create("There is an error in sending email", 500);
-    return next(err);
+    // const err = appError.create("There is an error in sending email", 500);
+    return next(new appError("There is an error in sending email", 500));
   }
 
   res
