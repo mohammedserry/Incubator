@@ -252,7 +252,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   user.save();
 
   // 3) If everything is ok, generate token
-  const token = generateJWT(user._id);
+  const token = generateJWT(req.user._id);
   res.status(200).json({ token });
 });
 
