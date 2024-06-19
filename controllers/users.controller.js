@@ -162,12 +162,11 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
   // 1) Get user by email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    const error = appError.create(
+    return next(appError.create(
       `There is no user with this email ${req.body.email}`,
       404,
       httpStatusText.FAIL
-    );
-    return next(error);
+    ));
   }
   // 2) if user exist, Generate hash reset random 6 digits
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -201,8 +200,7 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
     user.passwordResetVerified = undefined;
 
     await user.save();
-    // const err = appError.create("There is an error in sending email", 500);
-    return next(new appError("There is an error in sending email", 500));
+    return next(appError.create("There is an error in sending email", 500));
   }
 
   res
@@ -222,8 +220,7 @@ const verifyPassResetCode = asyncWrapper(async (req, res, next) => {
     passwordResetExpires: { $gt: Date.now() },
   });
   if (!user) {
-    const error = appError.create("Reset Code Invalid or Expired", 500);
-    return next(error);
+    return next(appError.create("Reset Code Invalid or Expired", 500));
   }
   user.passwordResetVerified = true;
   await user.save();
@@ -237,17 +234,15 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   // 1) Get user based on email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    const error = appError.create(
+    return next(appError.create(
       `There is no user with this email ${req.body.email}`,
       404
-    );
-    return next(error);
+    ));
   }
 
   // 2) Check if reset code verified
   if (!user.passwordResetVerified) {
-    const error = appError.create("Reset code not verified", 400);
-    return next(error);
+    return next(appError.create("Reset code not verified", 400));
   }
 
   user.password = req.body.newPassword;
