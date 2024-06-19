@@ -1,6 +1,6 @@
 const asyncWrapper = require("../middlewares/asyncWrapper");
 const User = require("../models/user.model");
-const AppError = require("../utils/appError");
+const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const sendEmail = require("../utils/sendEmail");
 const bcrypt = require("bcryptjs");
@@ -8,6 +8,7 @@ const crypto = require("crypto");
 // const jwt = require("jsonwebtoken");
 const generateJWT = require("../utils/generateJWT");
 const { validationResult } = require("express-validator");
+const { error } = require("console");
 
 const getAllUsers = asyncWrapper(async (req, res) => {
   const query = req.query;
@@ -27,7 +28,7 @@ const getUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findById(req.params.userId);
 
   if (!user) {
-    const error = AppError.create("not found user", 404, httpStatusText.FAIL);
+    const error = appError.create("not found user", 404, httpStatusText.FAIL);
     return next(error);
   }
   return res.json({ status: httpStatusText.SUCCESS, data: { user } });
@@ -36,7 +37,7 @@ const getUser = asyncWrapper(async (req, res, next) => {
 const addUser = asyncWrapper(async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const error = AppError.create(errors.array(), 400, httpStatusText.ERROR);
+    const error = appError.create(errors.array(), 400, httpStatusText.ERROR);
     return next(error);
   }
 
@@ -60,7 +61,7 @@ const updateUser = asyncWrapper(async (req, res, next) => {
 
   if (!updatedUser) {
     // If user is not found, create an error
-    const error = AppError.create(
+    const error = appError.create(
       "User not found",
       404,
       httpStatusText.NOT_FOUND
@@ -86,7 +87,7 @@ const register = asyncWrapper(async (req, res, next) => {
   const oldUser = await User.findOne({ email: email });
 
   if (oldUser) {
-    const error = AppError.create(
+    const error = appError.create(
       "user already exists",
       400,
       httpStatusText.FAIL
@@ -135,7 +136,7 @@ const login = asyncWrapper(async (req, res, next) => {
   const user = await User.findOne({ email: email });
 
   if (!user) {
-    const error = AppError.create("user not found", 400, httpStatusText.FAIL);
+    const error = appError.create("user not found", 400, httpStatusText.FAIL);
     return next(error);
   }
 
@@ -152,7 +153,7 @@ const login = asyncWrapper(async (req, res, next) => {
       .status(200)
       .json({ status: httpStatusText.SUCCESS, data: { token } });
   } else {
-    const error = AppError.create("something wrong", 500, httpStatusText.ERROR);
+    const error = appError.create("something wrong", 500, httpStatusText.ERROR);
     return next(error);
   }
 });
@@ -161,9 +162,12 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
   // 1) Get user by email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(
-      new AppError(`There is no user with this email ${req.body.email}`)
+    const error = appError.create(
+      `There is no user with this email ${req.body.email}`,
+      404,
+      httpStatusText.FAIL
     );
+    return next(error);
   }
   // 2) if user exist, Generate hash reset random 6 digits
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -195,7 +199,8 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
     user.passwordResetVerified = undefined;
 
     await user.save();
-    return next(new AppError("There is an error in sending email", 500));
+    const err = appError.create("There is an error in sending email", 500);
+    return next(err);
   }
 
   res
@@ -215,7 +220,8 @@ const verifyPassResetCode = asyncWrapper(async (req, res, next) => {
     passwordResetExpires: { $gt: Date.now() },
   });
   if (!user) {
-    return next(new AppError("Reset Code Invalid or Expired"));
+    const error = appError.create("Reset Code Invalid or Expired", 500);
+    return next(error);
   }
   user.passwordResetVerified = true;
   await user.save();
@@ -229,14 +235,17 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   // 1) Get user based on email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(
-      new appError(`There is no user with this email ${req.body.email}`, 404)
+    const error = appError.create(
+      `There is no user with this email ${req.body.email}`,
+      404
     );
+    return next(error);
   }
 
   // 2) Check if reset code verified
   if (!user.passwordResetVerified) {
-    return next(new AppError("Reset code not verified", 400));
+    const error = appError.create("Reset code not verified", 400);
+    return next(error);
   }
 
   user.password = req.body.newPassword;
@@ -248,7 +257,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
 
   // 3) If everything is ok, generate token
   const token = generateJWT(user._id);
-  res.status(200).json({ data : token });
+  res.status(200).json({ data: token });
 });
 
 module.exports = {
