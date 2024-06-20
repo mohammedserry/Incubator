@@ -8,7 +8,6 @@ const crypto = require("crypto");
 // const jwt = require("jsonwebtoken");
 const generateJWT = require("../utils/generateJWT");
 const { validationResult } = require("express-validator");
-const { error } = require("console");
 
 const getAllUsers = asyncWrapper(async (req, res) => {
   const query = req.query;
@@ -140,9 +139,9 @@ const login = asyncWrapper(async (req, res, next) => {
     return next(error);
   }
 
-  const matchedPassword = await bcrypt.compare(password, user.password);
+  // const matchedPassword = ;
 
-  if (user && matchedPassword) {
+  if (user || (await bcrypt.compare(req.body.password, user.password))) {
     const token = await generateJWT({
       email: user.email,
       id: user._id,
@@ -162,11 +161,13 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
   // 1) Get user by email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(appError.create(
-      `There is no user with this email ${req.body.email}`,
-      404,
-      httpStatusText.FAIL
-    ));
+    return next(
+      appError.create(
+        `There is no user with this email ${req.body.email}`,
+        404,
+        httpStatusText.FAIL
+      )
+    );
   }
   // 2) if user exist, Generate hash reset random 6 digits
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -235,13 +236,13 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
     return next(
-      new appError.create(`There is no user with this email ${req.body.email}`, 404)
+      appError.create(`There is no user with this email ${req.body.email}`, 404)
     );
   }
 
   // 2) Check if reset code verified
   if (!user.passwordResetVerified) {
-    return next(new appError.create("Reset code not verified", 400));
+    return next(appError.create("Reset code not verified", 400));
   }
 
   user.password = req.body.newPassword;
@@ -252,7 +253,11 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   user.save();
 
   // 3) If everything is ok, generate token
-  const token = generateJWT(user._id);
+  const token = await generateJWT({
+    email: user.email,
+    id: user._id,
+    role: user.role,
+  });
   res.status(200).json({ token });
 });
 

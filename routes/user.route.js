@@ -35,6 +35,18 @@ const upload = multer({ storage: diskStorage, fileFilter });
 // register
 // login
 
+router.route("/forgotPassword").post(userController.forgotPassword);
+
+router.route("/verifyResetCode").post(userController.verifyPassResetCode);
+
+router.route("/resetPassword").patch(userController.resetPassword);
+
+router
+  .route("/register")
+  .post(upload.single("avatar"), userController.register);
+
+router.route("/login").post(userController.login);
+
 router
   .route("/")
   .get(
@@ -54,17 +66,9 @@ router
     userController.deleteUser
   );
 
-router
-  .route("/register")
-  .post(upload.single("avatar"), userController.register);
 
-router.route("/login").post(userController.login);
 
-router.route("/forgotPassword").post(userController.forgotPassword);
 
-router.route("/verifyResetCode").post(userController.verifyPassResetCode);
-
-router.route("/resetPassword").patch(userController.resetPassword);
 
 
 
