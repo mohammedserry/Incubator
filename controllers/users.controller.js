@@ -184,7 +184,7 @@ const forgotPassword = asyncWrapper(async (req, res, next) => {
   await user.save();
 
   // 3) Send the reset code via email
-  const message = `Hi ${user.name}, \n We received a request to reset the password on your Incubator Account. 
+  const message = `Hi ${user.firstName}, \n We received a request to reset the password on your Incubator Account. 
   \n  ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure. 
   \n The Incubator Team`;
 
@@ -252,7 +252,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   user.save();
 
   // 3) If everything is ok, generate token
-  const token = generateJWT(req.user._id);
+  const token = generateJWT(user._id);
   res.status(200).json({ token });
 });
 
