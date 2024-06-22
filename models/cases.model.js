@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 // const { report } = require("../routes/user.route");
 
 const caseSchema = new mongoose.Schema({
@@ -13,6 +14,15 @@ const caseSchema = new mongoose.Schema({
   code: {
     type: Number,
     required: true,
+  },
+  phoneNumber: {
+    type: String,
+    validate : {
+      validator: function(v) {
+        return validator.isMobilePhone(v,"ar-EG");
+      },
+      message: props => `${props.value} is not a valid phone number!`
+    },
   },
   disease: {
     type: String,

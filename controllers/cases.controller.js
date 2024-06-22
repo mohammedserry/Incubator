@@ -1,11 +1,6 @@
 const asyncWrapper = require("../middlewares/asyncWrapper");
 const Case = require("../models/cases.model");
-// const appError = require("../utils/appError.js");
 const httpStatusText = require("../utils/httpStatusText");
-// const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
-// const generateJWT = require("../utils/generateJWT.js");
-// const { validationResult } = require("express-validator");
 
 
 const getAllCases = asyncWrapper(async (req, res) => {
