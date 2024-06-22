@@ -6,7 +6,7 @@ const reportSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  case :{
+  caseId :{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Case',
     required: true,
