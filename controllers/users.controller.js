@@ -150,7 +150,7 @@ const login = asyncWrapper(async (req, res, next) => {
 
     return res
       .status(200)
-      .json({ status: httpStatusText.SUCCESS, data: { token } });
+      .json({ status: httpStatusText.SUCCESS, data: { user, token } });
   } else {
     const error = appError.create("something wrong", 500, httpStatusText.ERROR);
     return next(error);
@@ -261,6 +261,49 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   res.status(200).json({ token });
 });
 
+const getLoggedUserData = asyncWrapper(async (req, res, next) => {
+  console.log(req.user)
+  req.params.userId = req.user.id;
+  next();
+});
+
+const updateLoggedUserPassword = asyncWrapper(async (req, res, next) => {
+  // 1) Update user password based user payload (req.user._id)
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      password: await bcrypt.hash(req.body.password, 12),
+      passwordChangedAt: Date.now(),
+    },
+    {
+      new: true,
+    }
+  );
+
+  // 2) Generate Token
+  const token = await generateJWT({
+    email: user.email,
+    id: user._id,
+    role: user.role,
+  });
+
+  res.status(200).json({ data: user, token });
+});
+
+const updateLoggedUserData = asyncWrapper(async (req, res, next) => {
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({ data: updatedUser });
+});
+
 module.exports = {
   getAllUsers,
   getUser,
@@ -272,4 +315,7 @@ module.exports = {
   forgotPassword,
   verifyPassResetCode,
   resetPassword,
+  getLoggedUserData,
+  updateLoggedUserPassword,
+  updateLoggedUserData,
 };

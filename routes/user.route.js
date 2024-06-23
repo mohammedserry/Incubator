@@ -47,29 +47,22 @@ router
 
 router.route("/login").post(userController.login);
 
-router
-  .route("/")
-  .get(
-    verifyToken,
-    allowedTo(userRoles.SUPER_ADMIN),
-    userController.getAllUsers
-  )
-  .post(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.addUser);
+// Logged Data
+router.use(verifyToken);
+
+router.get("/getMe", userController.getLoggedUserData, userController.getUser);
+router.patch("/changeMyPassword", userController.updateLoggedUserPassword);
+router.patch("/updateMe", userController.updateLoggedUserData);
+
+// Admin
+router.use(verifyToken, allowedTo(userRoles.SUPER_ADMIN));
+
+router.route("/").get(userController.getAllUsers).post(userController.addUser);
 
 router
   .route("/:userId")
-  .get(verifyToken, allowedTo(userRoles.SUPER_ADMIN), userController.getUser)
+  .get(userController.getUser)
   .patch(userController.updateUser)
-  .delete(
-    verifyToken,
-    allowedTo(userRoles.SUPER_ADMIN),
-    userController.deleteUser
-  );
-
-
-
-
-
-
+  .delete(userController.deleteUser);
 
 module.exports = router;
